@@ -37,6 +37,7 @@ kong_ssl_cert_key:                            # /path/to/certificate.key
 kong_server_tokens:             "on"
 kong_latency_tokens:            "on"
 kong_server_trusted_ips:        ""
+kong_client_body_buffer_size:   8k
 
 ##------------------
 ## DATASTORE

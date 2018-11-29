@@ -269,19 +269,19 @@ trusted_ips = {{ kong_server_trusted_ips }}
 # for further description of this parameter. Numeric values may be suffixed with
 # 'k' or 'm' to denote limits in terms of kilobytes or megabytes.
 
-#client_body_buffer_size = 8k    # Defines the buffer size for reading the
-                                 # request body. If the client request body is
-                                 # larger than this value, the body will be
-                                 # buffered to disk. Note that when the body is
-                                 # buffered to disk Kong plugins that access or
-                                 # manipulate the request body may not work, so
-                                 # it is advisable to set this value as high as
-                                 # possible (e.g., set it as high as
-                                 # `client_max_body_size` to force request
-                                 # bodies to be kept in memory). Do note that
-                                 # high-concurrency environments will require
-                                 # significant memory allocations to process
-                                 # many concurrent large request bodies.
+client_body_buffer_size = {{ kong_client_body_buffer_size }}     # Defines the buffer size for reading the
+                                                                 # request body. If the client request body is
+                                                                 # larger than this value, the body will be
+                                                                 # buffered to disk. Note that when the body is
+                                                                 # buffered to disk Kong plugins that access or
+                                                                 # manipulate the request body may not work, so
+                                                                 # it is advisable to set this value as high as
+                                                                 # possible (e.g., set it as high as
+                                                                 # `client_max_body_size` to force request
+                                                                 # bodies to be kept in memory). Do note that
+                                                                 # high-concurrency environments will require
+                                                                 # significant memory allocations to process
+                                                                 # many concurrent large request bodies.
 # Note: See
 # http://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
 # for further description of this parameter. Numeric values may be suffixed with
