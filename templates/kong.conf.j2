@@ -231,7 +231,8 @@ trusted_ips = {{ kong_server_trusted_ips }}
 # See http://nginx.org/en/docs/http/ngx_http_realip_module.html for
 # examples of accepted values.
 
-#real_ip_header = X-Real-IP      # Defines the request header field whose value
+real_ip_header = {{ kong_server_real_ip_header }}
+                                 # Defines the request header field whose value
                                  # will be used to replace the client address.
                                  # This value sets the ngx_http_realip_module
                                  # directive of the same name in the Nginx
@@ -249,7 +250,8 @@ trusted_ips = {{ kong_server_trusted_ips }}
 # See https://www.nginx.com/resources/admin-guide/proxy-protocol/ for more
 # details about the `proxy_protocol` parameter.
 
-#real_ip_recursive = off         # This value sets the ngx_http_realip_module
+real_ip_recursive = {{ kong_server_real_ip_recursive }}
+                                 # This value sets the ngx_http_realip_module
                                  # directive of the same name in the Nginx
                                  # configuration.
 # Note:
