@@ -83,7 +83,8 @@
     mode:  0644
   notify:
     - validate kong
-    - restart kong
+    - reload kong
+  tags: kong-config
 
 - name: Create kong custom nginx config file
   template:
@@ -101,11 +102,16 @@
     dest: /etc/systemd/system/kong.service
     mode: 0755
     src: systemd.j2
+  tags:
+    - kong-systemd
 
 - name: Ensure kong service is enabled
   service:
     name: kong
+    state: reloaded
     enabled: yes
+  tags:
+    - kong-systemd
 
 - name: Run kong migrations to keep database updated
   shell: >
