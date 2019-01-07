@@ -105,6 +105,10 @@
   tags:
     - kong-systemd
 
+- name: Run kong migrations to keep database updated
+  shell: >
+      /usr/local/bin/kong migrations up -c {{ kong_conf_dir }}/kong.conf --v
+
 - name: Ensure kong service is enabled
   service:
     name: kong
@@ -112,10 +116,6 @@
     enabled: yes
   tags:
     - kong-systemd
-
-- name: Run kong migrations to keep database updated
-  shell: >
-      /usr/local/bin/kong migrations up -c {{ kong_conf_dir }}/kong.conf --v
 
 - name: Ensure Kong is running
   service:
