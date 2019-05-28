@@ -73,6 +73,16 @@
     owner: root
     group: root
     mode: 0644
+  tags: logrotate
+
+- name: "Create logrotate symlink to cron.hourly"
+  file:
+    src: /etc/cron.daily/logrotate
+    dest: /etc/cron.hourly/logrotate
+    owner: root
+    group: root
+    state: link
+  tags: logrotate
 
 - name: Create kong config file
   template:
