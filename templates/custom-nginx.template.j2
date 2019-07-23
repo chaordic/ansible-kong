@@ -30,6 +30,6 @@ http {
     proxy_set_header {{ header }} {{ value }};
 {% endif %}
 {% endfor %}
-
+    large_client_header_buffers {{ kong_nginx_large_client_header_buffers }};
     include 'nginx-kong.conf';
 }
