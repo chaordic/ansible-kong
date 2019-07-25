@@ -208,6 +208,7 @@ latency_tokens = {{ kong_latency_tokens|default('on')|lower }}
                                  # and "X-Kong-Upstream-Latency" response
                                  # header fields.
 
+trusted_ips = {{ kong_server_trusted_ips }}
 #trusted_ips =                   # Defines trusted IP addresses blocks that are
                                  # known to send correct X-Forwarded-* headers.
                                  # Requests from trusted IPs make Kong forward
@@ -230,7 +231,8 @@ latency_tokens = {{ kong_latency_tokens|default('on')|lower }}
 # See http://nginx.org/en/docs/http/ngx_http_realip_module.html for
 # examples of accepted values.
 
-#real_ip_header = X-Real-IP      # Defines the request header field whose value
+real_ip_header = {{ kong_server_real_ip_header }}
+                                 # Defines the request header field whose value
                                  # will be used to replace the client address.
                                  # This value sets the ngx_http_realip_module
                                  # directive of the same name in the Nginx
@@ -248,7 +250,8 @@ latency_tokens = {{ kong_latency_tokens|default('on')|lower }}
 # See https://www.nginx.com/resources/admin-guide/proxy-protocol/ for more
 # details about the `proxy_protocol` parameter.
 
-#real_ip_recursive = off         # This value sets the ngx_http_realip_module
+real_ip_recursive = {{ kong_server_real_ip_recursive }}
+                                 # This value sets the ngx_http_realip_module
                                  # directive of the same name in the Nginx
                                  # configuration.
 # Note:
@@ -268,19 +271,19 @@ latency_tokens = {{ kong_latency_tokens|default('on')|lower }}
 # for further description of this parameter. Numeric values may be suffixed with
 # 'k' or 'm' to denote limits in terms of kilobytes or megabytes.
 
-#client_body_buffer_size = 8k    # Defines the buffer size for reading the
-                                 # request body. If the client request body is
-                                 # larger than this value, the body will be
-                                 # buffered to disk. Note that when the body is
-                                 # buffered to disk Kong plugins that access or
-                                 # manipulate the request body may not work, so
-                                 # it is advisable to set this value as high as
-                                 # possible (e.g., set it as high as
-                                 # `client_max_body_size` to force request
-                                 # bodies to be kept in memory). Do note that
-                                 # high-concurrency environments will require
-                                 # significant memory allocations to process
-                                 # many concurrent large request bodies.
+client_body_buffer_size = {{ kong_client_body_buffer_size }}     # Defines the buffer size for reading the
+                                                                 # request body. If the client request body is
+                                                                 # larger than this value, the body will be
+                                                                 # buffered to disk. Note that when the body is
+                                                                 # buffered to disk Kong plugins that access or
+                                                                 # manipulate the request body may not work, so
+                                                                 # it is advisable to set this value as high as
+                                                                 # possible (e.g., set it as high as
+                                                                 # `client_max_body_size` to force request
+                                                                 # bodies to be kept in memory). Do note that
+                                                                 # high-concurrency environments will require
+                                                                 # significant memory allocations to process
+                                                                 # many concurrent large request bodies.
 # Note: See
 # http://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
 # for further description of this parameter. Numeric values may be suffixed with
