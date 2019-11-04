@@ -36,6 +36,9 @@ log_level = {{ kong_log_level }}
 # Note: See http://nginx.org/en/docs/ngx_core_module.html#error_log for a list
 # of accepted values.
 
+{% kong_proxy_access_log is defined %}
+proxy_access_log = {{ kong_proxy_access_log }}
+{% else %}
 #proxy_access_log = logs/access.log       # Path for proxy port request access
                                           # logs. Set this value to `off` to
                                           # disable logging proxy requests.
