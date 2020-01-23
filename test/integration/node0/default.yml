@@ -1,57 +1,76 @@
 ---
-- name: Cassandra Install
+- name: Postgres start
   hosts: test-kitchen
 
-  vars:
-    java_package: oracle-java8-installer
-    cassandra_distro:  dsc
-    cassandra_version: 2.2.5
-    cassandra_dsc_version: 2.2.5-1
-
-    #cassandra_version: 3.7.0
-    cassandra_cluster_name: kitchenCluster
-    cassandra_listen_address: "{{ ansible_eth1.ipv4.address }}"
-    cassandra_rpc_address:    "{{ cassandra_listen_address }}"
-    cassandra_seeds:          [ "{{ cassandra_listen_address }}" ]
-    cassandra_reinitialize_cluster: false
-
-  pre_tasks:
-    - name: Set cassandra listen address | RedHat
-      set_fact: cassandra_listen_address="{{ ansible_enp0s8.ipv4.address }}"
-      when: ansible_os_family|lower == 'redhat'
-
   roles:
-    - wunzeco.java
-    - wunzeco.cassandra
+    - wunzeco.docker
 
   post_tasks:
-    - name: Wait for cassandra to start fully | Debian
-      wait_for: host="{{ ansible_eth1.ipv4.address }}" port=9042
-      when: ansible_os_family|lower == 'debian'
+    - name: Start postgresql container for kong
+      docker_container:
+        name:  kong-database
+        image: "postgres:10"
+        state: started
+        published_ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: kong
+          POSTGRES_DB:   kong
+      register: pgdb
 
-    - name: Wait for cassandra to start fully | RedHat
-      wait_for: host="{{ ansible_enp0s8.ipv4.address }}" port=9042
-      when: ansible_os_family|lower == 'redhat'
+    - name: Wait for postgresql container to start
+      wait_for: host="127.0.0.1" port=5432
 
 
 - name: Kong Install
   hosts: test-kitchen
 
   vars:
-    kong_version: 0.9.9
+    kong_version: 0.13.1
+    kong_version_current: 0.0.0
+
+    kong_conf_dir: /etc/kong
     kong_host:  "{{ ansible_eth1.ipv4.address }}"
-    kong_cassandra_host:          "{{ kong_host }}"
-    kong_proxy_listen:            "{{ kong_host }}:8000"
-    kong_proxy_listen_ssl:        "{{ kong_host }}:8443"
-    kong_admin_listen:            "{{ kong_host }}:8001"
-    kong_cluster_listen:          "{{ kong_host }}:7946"
-    kong_proxy_set_headers: 
+    kong_database:         postgres
+    kong_pg_host:          "{{ kong_host }}"
+    kong_proxy_listen:     "{{ kong_host }}:8000"
+    kong_proxy_listen_ssl: "{{ kong_host }}:8443"
+    kong_admin_listen:     "{{ kong_host }}:8001"
+    kong_cluster_listen:   "{{ kong_host }}:7946"
+    kong_proxy_set_headers:
       "X-Forwarded-Prefix": '$http_x_forwarded_prefix'
+    kong_nginx_custom_log_fields: [ realip_remote_addr, http_x_forwarded_prefix, http_x_forwarded_for, http_x_forwarded_proto ]
+    kong_nginx_json_log_format_enable: true
+    kong_db_update_propagation: 1
+    kong_manage_init_script: true
+    kong_nginx_custom_configs: 
+        - |-
+          # OpenID Connect config
+        - lua_shared_dict discovery 1m;
+        - lua_shared_dict jwks 1m;
+        - |
+          server {
+                  # Required so that OpenID doen't fail randomly...
+                  set $session_secret SomeAwesomeSecret;
+              }
 
   pre_tasks:
-    - name: Set kong host | RedHat
+    - name: START HERE
+      debug: msg=starting
+
+    - name: Set kong host
       set_fact: kong_host="{{ ansible_enp0s8.ipv4.address }}"
-      when: ansible_os_family|lower == 'redhat'
+      when: ansible_service_mgr == 'systemd'
+
+    - include_tasks: "roles/ansible-kong/test/integration/node0/kong-migration.yml"
+      when: ansible_os_family|lower == 'debian'
+
+    #- pause: minutes=10
 
   roles:
     - ansible-kong
+
+  post_tasks:
+    - name: Run kong_migration_check.sh
+      shell: /var/tmp/kong_migration_check.sh {{ kong_host }}
+      when: ansible_os_family|lower == 'debian' and kong_run_migration|default(false)

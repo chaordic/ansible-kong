@@ -28,43 +28,64 @@
     state: present
   when: kong_database|lower == "postgres" and kong_pg_root_user and kong_pg_root_password and create_db.changed
 
-- name: Download kong deb package
-  get_url: url="{{ kong_deb_pkg_url }}" dest=/var/tmp validate_certs=no
+- name: Set init script handlers for playbook
+  set_fact:
+    kong_reload: "Reload kong with init script"
+    kong_restart: "Restart kong with init script"
+  when: kong_manage_init_script
 
-- name: Install kong prerequisites
+- name: Set native kong service handlers for playbook
+  set_fact:
+    kong_reload: "Reload kong"
+    kong_restart: "Restart kong"
+  when: not kong_manage_init_script
+
+- name: Set kong pkg download variables
+  set_fact:
+    kong_deb_pkg_url: "{{ kong_deb_pkg_url_pre_0_11_x }}"
+    kong_rpm_pkg_url: "{{ kong_rpm_pkg_url_pre_0_11_x }}"
+    kong_deb_pkg:     "kong-{{ kong_version }}.{{ ansible_distribution_release }}_all.deb"
+    kong_rpm_pkg:     "kong-{{ kong_version }}.el7.noarch.rpm"
+  when: kong_version is version_compare('0.11.0', '<')
+
+# Debian
+- name: Download kong deb package | Debian
+  get_url:
+    url: "{{ kong_deb_pkg_url }}"
+    dest: "/var/tmp/{{ kong_deb_pkg }}"
+    validate_certs: no
+    force: no
+  when: ansible_os_family|lower == 'debian'
+
+- name: Install kong prerequisites (Debian/Ubuntu only)
   apt:
     name: "{{ item }}"
     update_cache: yes
     state: present
   with_items: "{{ kong_prereqs }}"
+  when: ansible_os_family|lower == 'debian'
 
-- name: Install kong
+- name: Install kong | Debian
   apt:
-    deb:   "/var/tmp/kong-community-edition-{{ kong_version }}.{{ ansible_distribution_release }}.all.deb"
+    deb:   "/var/tmp/{{ kong_deb_pkg }}"
     state: present
+  notify:
+    - "{{ kong_restart }}"
+  when: ansible_os_family|lower == 'debian'
 
-- name: Ensure kong nginx working dir has appropriate permissions
-  file:
-    path:  "{{ kong_nginx_working_dir }}"
-    state: directory
-    owner: www-data
-    group: www-data
-    mode:  0755
+# RedHat
+- name: Download kong rpm package | RedHat
+  get_url: url="{{ kong_rpm_pkg_url }}" dest=/var/tmp validate_certs=no
+  when: ansible_os_family|lower == 'redhat'
 
-- name: Create configurated log dir
-  file:
-    path: "{{ kong_log_dir }}"
-    state: directory
-    owner: www-data
-    group: www-data
-
-- name: Sylink to real log dir
-  file:
-    src: "{{ kong_log_dir }}"
-    dest: "{{ kong_nginx_working_dir }}/logs"
-    state: link
-    owner: www-data
-    group: www-data
+- name: Install kong | RedHat
+  yum:
+    name: "/var/tmp/{{ kong_rpm_pkg }}"
+    disable_gpg_check: yes
+    state: present
+  notify:
+    - "{{ kong_restart }}"
+  when: ansible_os_family|lower == 'redhat'
 
 - name: Create logrotate config for kong logs
   template:
@@ -84,57 +105,9 @@
     state: link
   tags: logrotate
 
-- name: Create kong config file
-  template:
-    src:  kong.conf.j2
-    dest: "{{ kong_conf_dir }}/kong.conf"
-    owner: root
-    group: root
-    mode:  0644
-  notify:
-    - validate kong
-    - reload kong
-  tags: kong-config
+- name: Check for supported kong versions
+  fail: msg="Kong {{ kong_version }} no longer supported"
+  when: kong_version is version_compare('0.11.0', '<')
 
-- name: Create kong custom nginx config file
-  template:
-    src:  custom-nginx.template.j2
-    dest: "{{ kong_conf_dir }}/custom-nginx.template"
-    owner: root
-    group: root
-    mode:  0644
-  notify:
-    - validate kong
-    - reload kong
-
-- name: Create kong systemd script
-  template:
-    dest: /etc/systemd/system/kong.service
-    mode: 0755
-    src: systemd.j2
-  tags:
-    - kong-systemd
-
-- name: Run kong migrations to keep database updated
-  shell: >
-      /usr/local/bin/kong migrations up -c {{ kong_conf_dir }}/kong.conf --v
-
-- name: Ensure kong service is enabled
-  service:
-    name: kong
-    state: reloaded
-    enabled: yes
-  tags:
-    - kong-systemd
-
-- name: Ensure Kong is running
-  service:
-    name: kong
-    state: started
-
-- name: Install common utilities to have in kong nodes
-  pip:
-    name: "{{ item }}"
-  with_items:
-    - httpie
-    - kong-cli
+- name: Kong Server Config & Start
+  include_tasks: "server-config.yml"

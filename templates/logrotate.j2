@@ -1,9 +1,12 @@
 {{ kong_log_dir }}/*.log {
-    {{ kong_logrotate_freq }}
-    rotate {{ kong_logrotate_quantity }}
-    maxsize {{ kong_logrotate_max_size }}
+    {{ kong_logrotate_frequency }}
+    rotate {{ kong_logrotate_rotate }}
     missingok
-    dateext
-    copytruncate
+    maxsize {{ kong_logrotate_maxsize|default('500M') }}
+    notifempty
+    sharedscripts
     compress
+    postrotate
+        [ ! -f {{ kong_prefix_dir }}/pids/nginx.pid ] || kill -USR1 $(cat {{ kong_prefix_dir }}/pids/nginx.pid)
+    endscript
 }
