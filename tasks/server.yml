@@ -48,6 +48,14 @@
     kong_rpm_pkg:     "kong-{{ kong_version }}.el7.noarch.rpm"
   when: kong_version is version_compare('0.11.0', '<')
 
+- name: Set kong pkg download variables
+  set_fact:
+    kong_deb_pkg_url: "{{ kong_deb_pkg_url_post_1_x }}"
+    kong_rpm_pkg_url: "{{ kong_rpm_pkg_url_post_1_x }}"
+    kong_deb_pkg:     "{{ kong_deb_pkg_post_1_x }}"
+    kong_rpm_pkg:     "{{ kong_rpm_pkg_post_1_x }}"
+  when: kong_version is version_compare('2.0.0', '>=')
+
 # Debian
 - name: Download kong deb package | Debian
   get_url:
