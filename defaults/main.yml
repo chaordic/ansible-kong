@@ -20,9 +20,9 @@ kong_rpm_pkg_pre_0_11_x:     "kong-{{ kong_version }}.el7.noarch.rpm"
 kong_deb_pkg_url_pre_0_11_x: "https://github.com/Mashape/kong/releases/download/{{ kong_version }}/{{ kong_deb_pkg_pre_0_11_x }}"
 kong_rpm_pkg_url_pre_0_11_x: "https://github.com/Mashape/kong/releases/download/{{ kong_version }}/{{ kong_rpm_pkg_pre_0_11_x }}"
 kong_deb_pkg_post_1_x:     "kong-{{ kong_version }}.{{ ansible_distribution_release }}.amd64.deb"
-kong_deb_pkg_url_post_1_x: "https://bintray.com/kong/kong-deb/download_file?file_path=dists/{{ kong_deb_pkg }}"
+kong_deb_pkg_url_post_1_x: "https://bintray.com/kong/kong-deb/download_file?file_path=dists/{{ kong_deb_pkg_post_1_x }}"
 kong_rpm_pkg_post_1_x:     "kong-{{ kong_version }}.{{ ansible_distribution_release }}.amd64.rpm"
-kong_rpm_pkg_url_post_1_x: "https://bintray.com/kong/kong-rpm/download_file?file_path=rhel/7/{{ kong_deb_pkg }}"
+kong_rpm_pkg_url_post_1_x: "https://bintray.com/kong/kong-rpm/download_file?file_path=rhel/7/{{ kong_rpm_pkg_post_1_x }}"
 
 ############
 ##  Config
