@@ -74,7 +74,7 @@ kong_client_body_buffer_size: 8k
 kong_error_default_type:      'text/plain'
 
 kong_nginx_custom_configs:
-  - "large_client_header_buffers {{ kong_nginx_large_client_header_buffers }}"
+  - "large_client_header_buffers {{ kong_nginx_large_client_header_buffers }};"
 kong_nginx_custom_log_fields: []
 kong_nginx_json_log_format_enable: false
 
