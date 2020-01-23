@@ -3,7 +3,7 @@
   pip:
     name: "{{ item }}"
   with_items:
-    - psycopg2
+    - psycopg2-binary
   when: kong_database|lower == "postgres" and kong_pg_root_user and kong_pg_root_password
 
 - name: Ensure Kong postgres DB database
