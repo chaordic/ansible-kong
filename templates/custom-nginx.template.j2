@@ -13,12 +13,12 @@ pid pids/nginx.pid;
 error_log logs/error.log {{ '${{' }}LOG_LEVEL}};
 
 > if nginx_optimizations then
-worker_rlimit_nofile {{ '${{' }}WORKER_RLIMIT}};
+worker_rlimit_nofile {{ kong_nginx_worker_rlimit | default(64000) }};
 > end
 
 events {
 > if nginx_optimizations then
-    worker_connections {{ '${{' }}WORKER_CONNECTIONS}};
+    worker_connections {{ kong_nginx_worker_connections | default(4096) }};
     multi_accept on;
 > end
 }
