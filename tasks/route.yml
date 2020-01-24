@@ -1,0 +1,71 @@
+---
+
+- debug: msg="ROUTE | Kong Version - {{ kong_version }}"
+
+- name: Check kong version
+  fail: msg="Route object requires v0.13+"
+  when: kong_version is version_compare('0.13', '<')
+
+- name: Verify kong admin api available | route
+  uri: url="{{ kong_admin_api_url|default('http://localhost:8001') }}"
+
+- name: Initialise get_routes_status_code
+  set_fact:
+    get_routes_status_code: "200,404"
+  when: kong_delete_route_obj
+
+- name: Get list of route objects configured in kong associated to service
+  uri:
+    url: "{{ kong_admin_api_url|default('http://localhost:8001') }}/services/{{ kong_route_config.service }}/routes"
+    status_code: "{{ get_routes_status_code|default('200') }}"
+  register: routes
+
+#- debug: var=routes
+
+- name: Get service object
+  uri:
+    url: "{{ kong_admin_api_url|default('http://localhost:8001') }}/services/{{ kong_route_config.service }}"
+  register: svc
+
+#- debug: var=svc
+
+- name: Set route_service_id variable required for route object config
+  set_fact:
+    route_service_id: "{{ svc.json.id }}"
+
+# route = hosts + paths + method + protocols
+
+# Note: Why check for existing route objects?
+#   - To prevent configuring duplicate (and redundant) route objects
+#   - Kong will happily create route objects with exactly same properties for a service.
+#     In other words, redundant routes that add no value but could be a housecleaning
+#     nightmare.
+#
+# It is essential to check for existing routes configured for a service so as not to
+# attempt adding the routes again. Unfortunately, there isn't a single easily
+# identifiable property in the route object (e.g. name) to facilitate matching routes
+# already configured.
+# The approach taken here is to compare hosts, paths, methods and protocols properties
+# of the config item against all routes associated to the service since a combination
+# of these properties match a route.
+#
+# The steps below is to prevent duplicate routes.
+
+# Route id stored in temporary file created here is used by plugin.yml
+- name: Find id of an existing route that matches route object config
+  template:
+    src: matched_route_id.j2
+    dest: "/tmp/{{ kong_route_config.name }}_route.id"
+  delegate_to: 127.0.0.1
+  become: false
+
+- name: Set route id of matched route object config
+  set_fact: matched_route_id="{{ lookup('file', '/tmp/{{ kong_route_config.name }}_route.id') }}"
+
+- set_fact: _cmd=add
+
+- set_fact: _cmd=delete
+  when: kong_delete_route_obj
+
+- name: Kong Route Object Config
+  include_tasks: route_{{ _cmd }}.yml
