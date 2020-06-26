@@ -40,7 +40,7 @@
 
 - name: Install kong
   apt:
-    deb:   "/var/tmp/kong-community-edition-{{ kong_version }}.{{ ansible_distribution_release }}.all.deb"
+    deb:   "/var/tmp/{{ kong_deb_pkg }}"
     state: present
 
 - name: Ensure kong nginx working dir has appropriate permissions
